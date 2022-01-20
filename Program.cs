@@ -15,11 +15,12 @@ namespace pvcWeatherBot
 
         static void Main(string[] args)
         {
-            WeatherBotEventHandler();
+            var functionality = new Functionality();
+            WeatherBotEventHandler(functionality);
             Console.ReadLine();
         }
 
-        static async void WeatherBotEventHandler()
+        static async void WeatherBotEventHandler(Functionality functionality)
         {
             TelegramBotToken token = new TelegramBotToken();// Токен тут
             var client = new TelegramBotClient(token.token);
@@ -51,11 +52,11 @@ namespace pvcWeatherBot
                 var chatId = update.Message.Chat.Id;
                 var messageText = update.Message.Text;
 
-                
 
+               
                 Message sentMessage = await botClient.SendTextMessageAsync(
                     chatId: chatId,
-                    text:  $"{Functionality.ResponseBuilder(messageText)}\n",//Создание ответа на запрос погоды    
+                    text:  $"{functionality.ResponseBuilder(messageText)}\n",//Создание ответа на запрос погоды    
                     cancellationToken: cancellationToken);
             }
             

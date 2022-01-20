@@ -7,26 +7,22 @@ namespace pvcWeatherBot
 {
     public class Functionality
     {
-        public static string GetWeather(string msgTxt)
+        private string GetWeather(string msgTxt)
         {
-
-
-            {
                 try
                 {
                     //Сделать смену языка
                     WeatherAPIToken token = new WeatherAPIToken();
-
+                    
                     string url = $"http://api.openweathermap.org/data/2.5/weather?q={msgTxt}&units=metric&appid={token.token}&lang=ru";
                     HttpWebRequest httpWebRequest = (HttpWebRequest)WebRequest.Create(url);
-                    HttpWebResponse httpWebResponse = (HttpWebResponse)httpWebRequest.GetResponse();
-
+                    using HttpWebResponse httpWebResponse = (HttpWebResponse)httpWebRequest.GetResponse();
+                    
                     string response;
 
-                    using (StreamReader streamReader = new StreamReader(httpWebResponse.GetResponseStream()))
-                    {
-                        response = streamReader.ReadToEnd();
-                    }
+                    using StreamReader streamReader = new StreamReader(httpWebResponse.GetResponseStream());
+                    response = streamReader.ReadToEnd();
+                    
 
                     return response;
                 }
@@ -34,11 +30,10 @@ namespace pvcWeatherBot
                 {
                     return "Ошибка: Такой город не найден!";
                 }
-            }
         }
-        public static string MessageBuilder(string response)
+        private string MessageBuilder(string response)
         {
-            WeatherResponse weatherJson = JsonConvert.DeserializeObject<WeatherResponse>(response);
+            var weatherJson = JsonConvert.DeserializeObject<WeatherResponse>(response);
 
             string description = "";
             foreach (var item in weatherJson.weather)
@@ -57,7 +52,7 @@ namespace pvcWeatherBot
 
             return weatherMessage;
         }
-        public static string ResponseBuilder(string MsgText)
+        public string ResponseBuilder(string MsgText)
         {
             string responseByCity = GetWeather(MsgText);
             string resultMessage;
