@@ -1,17 +1,63 @@
 ﻿using System.IO;
 using Newtonsoft.Json;
 using System.Net;
-
+using System;
+using System.Net.Http;
+using HtmlAgilityPack;
+using System.Net.Http;
+using System.Net.Http.Headers;
+using System.Threading.Tasks;
+using System.Net;
+using System.Text;
+using System.IO;
+using System.Collections.Generic;
+using System;
+using HtmlAgilityPack;
+using System.Collections.Generic;
+using System.Linq;
+using Newtonsoft.Json.Linq;
 
 namespace pvcWeatherBot
 {
     public class Functionality
     {
+        public static string[] news = new string[5];
+        public static void GetNews()
+        {
+            
+            var html = @"https://yandex.ru/";
+
+            HtmlWeb web = new HtmlWeb();
+
+            var htmlDoc = web.Load(html);
+            
+            int i = 0;
+            IEnumerable<HtmlNode> nodes = htmlDoc.DocumentNode.Descendants().Where(n => n.HasClass("list__item"));// Иногда выдаёт ошибку (ето яндекс виноват)
+            foreach (var item in nodes)
+            {
+                var a = item.Descendants("a").FirstOrDefault();
+                string b ="";
+                try {
+                    b = a.GetAttributeValue("href", null);
+                }
+                catch { }
+                try {
+                    news[i] = b;
+                    //Console.WriteLine(news[i]);
+                    i++;
+                    if (i == 5)
+                        break;
+
+                }
+                catch { }
+                
+                
+            }
+        }
         private string GetWeather(string msgTxt)
         {
                 try
                 {
-                    //Сделать смену языка
                     WeatherAPIToken token = new WeatherAPIToken();
                     
                     string url = $"http://api.openweathermap.org/data/2.5/weather?q={msgTxt}&units=metric&appid={token.token}&lang=ru";
@@ -22,8 +68,8 @@ namespace pvcWeatherBot
 
                     using StreamReader streamReader = new StreamReader(httpWebResponse.GetResponseStream());
                     response = streamReader.ReadToEnd();
-                    
 
+                     
                     return response;
                 }
                 catch
@@ -52,8 +98,14 @@ namespace pvcWeatherBot
 
             return weatherMessage;
         }
+
         public string ResponseBuilder(string MsgText)
         {
+            if(MsgText == "Новости")
+            {
+                GetNews();
+                return news[5];
+            }
             string responseByCity = GetWeather(MsgText);
             string resultMessage;
             if (responseByCity != "Ошибка: Такой город не найден!")

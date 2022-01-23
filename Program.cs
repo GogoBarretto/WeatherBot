@@ -6,7 +6,9 @@ using Telegram.Bot.Exceptions;
 using Telegram.Bot.Extensions.Polling;
 using Telegram.Bot.Types;
 using Telegram.Bot.Types.Enums;
-
+using Telegram.Bot.Types.ReplyMarkups;
+using System.Collections.Generic;
+//using Telegram.Bot.Types.ReplyMarkups;
 
 namespace pvcWeatherBot
 {
@@ -15,6 +17,8 @@ namespace pvcWeatherBot
 
         static void Main(string[] args)
         {
+            Functionality.GetNews();
+            string[] newsLinks = Functionality.news;
             var functionality = new Functionality();
             WeatherBotEventHandler(functionality);
             Console.ReadLine();
@@ -52,13 +56,54 @@ namespace pvcWeatherBot
                 var chatId = update.Message.Chat.Id;
                 var messageText = update.Message.Text;
 
+                var rkm = new ReplyKeyboardMarkup("");
 
-               
+                rkm.Keyboard = new KeyboardButton[][]
+                {
+                new KeyboardButton[]
+                {  
+                    new KeyboardButton("Новости"),
+                    new KeyboardButton("Погода")
+                }
+                
+                };
+                rkm.ResizeKeyboard = true;
+
+                Console.WriteLine(messageText); // Вывод введённых текстов
+
+
+                if(messageText != "Погода" && messageText != "Новости") // Вывод погоды по городу
+                { 
                 Message sentMessage = await botClient.SendTextMessageAsync(
                     chatId: chatId,
-                    text:  $"{functionality.ResponseBuilder(messageText)}\n",//Создание ответа на запрос погоды    
+                    text: $"{functionality.ResponseBuilder(messageText)}\n",//Создание ответа на запрос погоды    
+                    replyMarkup: rkm,
+                    cancellationToken: cancellationToken) ;
+                }
+                if(messageText == "Погода") // Помощь по погоде
+                {
+                    Message sentMessage = await botClient.SendTextMessageAsync(
+                        chatId: chatId,
+                        text: "Чтобы узнать погоду в необходимом городе, просто введите название города (прим. \"Москва\")",
+                        cancellationToken: cancellationToken);
+                }
+                if(messageText == "Новости") // Новости должны выводиться
+                {
+                    Functionality.GetNews();
+                    string[] newsLinks = Functionality.news;
+                    
+                    for(int i = 0; i < 5; i++) 
+                    {
+                    Message sentMessage = await botClient.SendTextMessageAsync(
+                    chatId: chatId,
+                    text: $"{newsLinks[i]}\n",//Переделать
+                    replyMarkup: rkm,
                     cancellationToken: cancellationToken);
+                    }
+                }
+
             }
+            
             
             Task HandleErrorAsync(ITelegramBotClient botClient, Exception exception, CancellationToken cancellationToken)
             {
@@ -72,6 +117,10 @@ namespace pvcWeatherBot
                 Console.WriteLine(ErrorMessage);
                 return Task.CompletedTask;
             }
+
+            
         }
+
+
     }
 }
