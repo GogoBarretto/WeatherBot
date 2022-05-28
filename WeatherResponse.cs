@@ -6,7 +6,6 @@ namespace pvcWeatherBot
         {
             public WeatherInfo Main { get; set; }
             public WindInfo Wind { get; set;}
-        //public PrecipitationInfo Weather { get; set; }
         public List<Weather> weather { get; set; }
 
         public string Name { get; set; }

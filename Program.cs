@@ -7,8 +7,7 @@ using Telegram.Bot.Extensions.Polling;
 using Telegram.Bot.Types;
 using Telegram.Bot.Types.Enums;
 using Telegram.Bot.Types.ReplyMarkups;
-using System.Collections.Generic;
-//using Telegram.Bot.Types.ReplyMarkups;
+
 
 namespace pvcWeatherBot
 {
@@ -26,13 +25,13 @@ namespace pvcWeatherBot
 
         static async void WeatherBotEventHandler(Functionality functionality)
         {
-            TelegramBotToken token = new TelegramBotToken();// Токен тут
+            TelegramBotToken token = new TelegramBotToken();
             var client = new TelegramBotClient(token.token);
             using var cts = new CancellationTokenSource();
 
             var receiverOptions = new ReceiverOptions
             {
-                AllowedUpdates = { } // receive all update types
+                AllowedUpdates = { } 
             };
             
             client.StartReceiving(
@@ -58,49 +57,54 @@ namespace pvcWeatherBot
 
                 var rkm = new ReplyKeyboardMarkup("");
 
-                rkm.Keyboard = new KeyboardButton[][]
-                {
-                new KeyboardButton[]
-                {  
-                    new KeyboardButton("Новости"),
-                    new KeyboardButton("Погода")
-                }
                 
-                };
-                rkm.ResizeKeyboard = true;
 
-                Console.WriteLine(messageText); // Вывод введённых текстов
+                Console.WriteLine(messageText); 
 
 
-                if(messageText != "Погода" && messageText != "Новости") // Вывод погоды по городу
+                if(messageText != "Погода" && messageText != "Новости") 
                 { 
                 Message sentMessage = await botClient.SendTextMessageAsync(
                     chatId: chatId,
-                    text: $"{functionality.ResponseBuilder(messageText)}\n",//Создание ответа на запрос погоды    
+                    text: $"{functionality.ResponseBuilder(messageText)}\n",  
                     replyMarkup: rkm,
                     cancellationToken: cancellationToken) ;
                 }
-                if(messageText == "Погода") // Помощь по погоде
+                if(messageText == "Погода") 
                 {
                     Message sentMessage = await botClient.SendTextMessageAsync(
                         chatId: chatId,
+                        replyMarkup: rkm,
                         text: "Чтобы узнать погоду в необходимом городе, просто введите название города (прим. \"Москва\")",
                         cancellationToken: cancellationToken);
                 }
-                if(messageText == "Новости") // Новости должны выводиться
+                if(messageText == "Новости")
                 {
                     Functionality.GetNews();
                     string[] newsLinks = Functionality.news;
                     
                     for(int i = 0; i < 5; i++) 
                     {
+                        
                     Message sentMessage = await botClient.SendTextMessageAsync(
                     chatId: chatId,
-                    text: $"{newsLinks[i]}\n",//Переделать
+                    text: $"{newsLinks[i]}\n",
+                    parseMode: ParseMode.MarkdownV2,
                     replyMarkup: rkm,
                     cancellationToken: cancellationToken);
                     }
                 }
+
+                rkm.Keyboard = new KeyboardButton[][]
+                {
+                new KeyboardButton[]
+                {
+                    new KeyboardButton("Новости"),
+                    new KeyboardButton("Погода")
+                }
+
+                };
+                rkm.ResizeKeyboard = true;
 
             }
             

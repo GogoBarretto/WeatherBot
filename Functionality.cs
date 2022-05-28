@@ -1,21 +1,10 @@
 ﻿using System.IO;
 using Newtonsoft.Json;
 using System.Net;
-using System;
-using System.Net.Http;
-using HtmlAgilityPack;
-using System.Net.Http;
-using System.Net.Http.Headers;
-using System.Threading.Tasks;
-using System.Net;
-using System.Text;
-using System.IO;
-using System.Collections.Generic;
-using System;
 using HtmlAgilityPack;
 using System.Collections.Generic;
 using System.Linq;
-using Newtonsoft.Json.Linq;
+using Yandex.Geocoder;
 
 namespace pvcWeatherBot
 {
@@ -32,18 +21,21 @@ namespace pvcWeatherBot
             var htmlDoc = web.Load(html);
             
             int i = 0;
-            IEnumerable<HtmlNode> nodes = htmlDoc.DocumentNode.Descendants().Where(n => n.HasClass("list__item"));// Иногда выдаёт ошибку (ето яндекс виноват)
+            IEnumerable<HtmlNode> nodes = htmlDoc.DocumentNode.Descendants().Where(n => n.HasClass("list__item"));
             foreach (var item in nodes)
             {
                 var a = item.Descendants("a").FirstOrDefault();
                 string b ="";
+                string answer = "";
                 try {
+                    
                     b = a.GetAttributeValue("href", null);
+                    answer = $"[Новость №{i + 1}]({b})";
                 }
                 catch { }
                 try {
-                    news[i] = b;
-                    //Console.WriteLine(news[i]);
+                    //news[i] = b;
+                    news[i] = answer;
                     i++;
                     if (i == 5)
                         break;
@@ -56,27 +48,28 @@ namespace pvcWeatherBot
         }
         private string GetWeather(string msgTxt)
         {
-                try
-                {
-                    WeatherAPIToken token = new WeatherAPIToken();
-                    
-                    string url = $"http://api.openweathermap.org/data/2.5/weather?q={msgTxt}&units=metric&appid={token.token}&lang=ru";
-                    HttpWebRequest httpWebRequest = (HttpWebRequest)WebRequest.Create(url);
-                    using HttpWebResponse httpWebResponse = (HttpWebResponse)httpWebRequest.GetResponse();
-                    
-                    string response;
+            try
+            {
+                WeatherAPIToken token = new WeatherAPIToken();
 
-                    using StreamReader streamReader = new StreamReader(httpWebResponse.GetResponseStream());
-                    response = streamReader.ReadToEnd();
+                string url = $"http://api.openweathermap.org/data/2.5/weather?q={msgTxt}&units=metric&appid={token.token}&lang=ru";
+                HttpWebRequest httpWebRequest = (HttpWebRequest)WebRequest.Create(url);
+                using HttpWebResponse httpWebResponse = (HttpWebResponse)httpWebRequest.GetResponse();
 
-                     
-                    return response;
-                }
-                catch
-                {
-                    return "Ошибка: Такой город не найден!";
-                }
+                string response;
+
+                using StreamReader streamReader = new StreamReader(httpWebResponse.GetResponseStream());
+                response = streamReader.ReadToEnd();
+
+
+                return response;
+            }
+            catch
+            {
+                return "Ошибка: Такой город не найден!";
+            }
         }
+
         private string MessageBuilder(string response)
         {
             var weatherJson = JsonConvert.DeserializeObject<WeatherResponse>(response);
@@ -99,6 +92,7 @@ namespace pvcWeatherBot
             return weatherMessage;
         }
 
+        
         public string ResponseBuilder(string MsgText)
         {
             if(MsgText == "Новости")
@@ -106,6 +100,8 @@ namespace pvcWeatherBot
                 GetNews();
                 return news[5];
             }
+
+            GetCityCoordinates(MsgText);
             string responseByCity = GetWeather(MsgText);
             string resultMessage;
             if (responseByCity != "Ошибка: Такой город не найден!")
@@ -114,9 +110,25 @@ namespace pvcWeatherBot
             }
             else
             {
+                
                 resultMessage = responseByCity;
             }
             return resultMessage;
+        }
+        private async void GetCityCoordinates(string city)
+        {
+            YandexApiToken token = new YandexApiToken();
+            var request = new GeocoderRequest { Request = city };
+            var client = new GeocoderClient(token.token);
+
+
+
+            var response =  await client.Geocode(request);
+
+            var firstGeoObject = response.GeoObjectCollection.FeatureMember.FirstOrDefault();
+            var coordinate = firstGeoObject.GeoObject.Point.Pos;
+
+            System.Console.WriteLine(coordinate);
         }
     }
 }
