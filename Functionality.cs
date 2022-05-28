@@ -11,24 +11,25 @@ namespace pvcWeatherBot
     public class Functionality
     {
         public static string[] news = new string[5];
+        public string[] arrayCoord = null;
         public static void GetNews()
         {
-            
+
             var html = @"https://yandex.ru/";
 
             HtmlWeb web = new HtmlWeb();
 
             var htmlDoc = web.Load(html);
-            
+
             int i = 0;
             IEnumerable<HtmlNode> nodes = htmlDoc.DocumentNode.Descendants().Where(n => n.HasClass("list__item"));
             foreach (var item in nodes)
             {
                 var a = item.Descendants("a").FirstOrDefault();
-                string b ="";
+                string b = "";
                 string answer = "";
                 try {
-                    
+
                     b = a.GetAttributeValue("href", null);
                     answer = $"[Новость №{i + 1}]({b})";
                 }
@@ -42,8 +43,8 @@ namespace pvcWeatherBot
 
                 }
                 catch { }
-                
-                
+
+
             }
         }
         private string GetWeather(string msgTxt)
@@ -51,15 +52,19 @@ namespace pvcWeatherBot
             try
             {
                 WeatherAPIToken token = new WeatherAPIToken();
-
-                string url = $"http://api.openweathermap.org/data/2.5/weather?q={msgTxt}&units=metric&appid={token.token}&lang=ru";
+                GetCityCoordinates(msgTxt);
+                System.Threading.Thread.Sleep(500);
+                string url = $"http://api.openweathermap.org/data/2.5/forecast?lat={arrayCoord[1]}&lon={arrayCoord[0]}&units=metric&appid={token.token}&lang=ru";
+                
+                //string url = $"http://api.openweathermap.org/data/2.5/weather?lat={arrayCoord[1]}&lon={arrayCoord[0]}&units=metric&appid={token.token}&lang=ru";
                 HttpWebRequest httpWebRequest = (HttpWebRequest)WebRequest.Create(url);
                 using HttpWebResponse httpWebResponse = (HttpWebResponse)httpWebRequest.GetResponse();
 
                 string response;
-
+                
                 using StreamReader streamReader = new StreamReader(httpWebResponse.GetResponseStream());
                 response = streamReader.ReadToEnd();
+                System.Console.WriteLine(response);
 
 
                 return response;
@@ -92,10 +97,10 @@ namespace pvcWeatherBot
             return weatherMessage;
         }
 
-        
+
         public string ResponseBuilder(string MsgText)
         {
-            if(MsgText == "Новости")
+            if (MsgText == "Новости")
             {
                 GetNews();
                 return news[5];
@@ -110,7 +115,7 @@ namespace pvcWeatherBot
             }
             else
             {
-                
+
                 resultMessage = responseByCity;
             }
             return resultMessage;
@@ -127,8 +132,10 @@ namespace pvcWeatherBot
 
             var firstGeoObject = response.GeoObjectCollection.FeatureMember.FirstOrDefault();
             var coordinate = firstGeoObject.GeoObject.Point.Pos;
+            arrayCoord = coordinate.Split(" ");
 
-            System.Console.WriteLine(coordinate);
+            //System.Console.WriteLine($"[1] {arrayCoord[0]}  [2] {arrayCoord[1]}");
+
         }
     }
 }
